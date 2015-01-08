@@ -8,9 +8,13 @@ Use the option --help for more information.
 
 """
 
+import sys
+import logging
 import argparse
 import textwrap
+import pyjoint
 from pyjoint.__version__ import VERSION
+from pyjoint.core.error import FatalError
 
 
 def parse_options():
@@ -35,14 +39,32 @@ version:
                                    epilog=textwrap.dedent(epi))
     argp.add_argument('inputfile', type=str,
                       help='input file to process')
-
+    argp.add_argument('--debug', action='store_true', dest='debug',
+                      help='printing logging messages to stderr')
     return argp.parse_args()
+
+
+def main(arg):
+    """Main routine. """
+    logging.info("starting main routine")
+    vertices, faces = pyjoint.read_data(arg.inputfile)
+    print vertices
+    print faces
 
 
 def run():
     """Run pyjoint from the command line. """
     arg = parse_options()
-    print arg
+    if arg.debug:
+        logging.basicConfig(
+            stream=sys.stderr,
+            format='%(pathname)s:%(lineno)d: %(message)s',
+            level=logging.DEBUG
+        )
+    try:
+        main(arg)
+    except FatalError as err:
+        print err.to_json()
 
 
 if __name__ == '__main__':
